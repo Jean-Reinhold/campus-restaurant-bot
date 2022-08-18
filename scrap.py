@@ -1,5 +1,14 @@
 import requests
 import datetime
+from temporalcache import interval
+import logging
+
+logging.basicConfig(
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    level=logging.INFO,
+    filename="logs.txt",
+    filemode="a+"
+)
 
 # Id dos restaurantes no backend
 RESTAURANT_MAP ={
@@ -23,20 +32,22 @@ def get_restaurant_meals(res: dict) -> dict:
     )
   return meals
 
+@interval(seconds=3600)
 def get_menus():
-    menus = {}
-    tdy = datetime.date.today()
-    for restaurant in RESTAURANT_MAP:  
-      res = requests.get(
-          get_query_string(date=f"{tdy.day}/{tdy.month}/{tdy.year}",
-          restaurant=RESTAURANT_MAP[restaurant])
-      ).json()
+  logging.warning(f"Cobalto was requested")
+  menus = {}
+  tdy = datetime.date.today()
+  for restaurant in RESTAURANT_MAP:  
+    res = requests.get(
+        get_query_string(date=f"{tdy.day}/{tdy.month}/{tdy.year}",
+        restaurant=RESTAURANT_MAP[restaurant])
+    ).json() 
 
-      if "rows" not in res:
-        menus[restaurant] = "Não haverão refeições nesse restaurante"
-        continue
-      menus[restaurant] = get_restaurant_meals(res=res)
-    return menus
+    if "rows" not in res:
+      menus[restaurant] = "Refeições ainda não disponíveis"
+      continue
+    menus[restaurant] = get_restaurant_meals(res=res)
+  return menus
 
 def format_meal(meal: list[tuple], title) -> str:  
   txt = f"{title}\n"

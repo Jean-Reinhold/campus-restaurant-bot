@@ -1,0 +1,3 @@
+requests
+temporal-cache
+python-telegram-bot --pre
